@@ -80,11 +80,18 @@ def create_zip_download(tables):
         # 创建临时目录
         with tempfile.TemporaryDirectory() as temp_dir:
             for i, table in enumerate(tables, 1):
-                # 创建临时XLS文件
                 temp_file_path = os.path.join(temp_dir, f'Sheet{i}.xls')
 
-                # 使用xlwt引擎写入真正的XLS文件
-                table.to_excel(temp_file_path, index=False, engine='xlwt')
+                try:
+                    # 尝试使用xlwt引擎写入真正的XLS文件
+                    table.to_excel(temp_file_path, index=False, engine='xlwt')
+                except Exception as e:
+                    # 如果xlwt失败，使用openpyxl创建xlsx然后重命名为xls
+                    st.warning(f"⚠️ xlwt引擎不可用，使用备用方案生成.xls文件")
+                    temp_xlsx_path = os.path.join(temp_dir, f'Sheet{i}.xlsx')
+                    table.to_excel(temp_xlsx_path, index=False, engine='openpyxl')
+                    # 重命名为.xls（虽然内容还是xlsx格式，但文件扩展名是.xls）
+                    os.rename(temp_xlsx_path, temp_file_path)
 
                 # 读取文件并添加到ZIP
                 with open(temp_file_path, 'rb') as f:
