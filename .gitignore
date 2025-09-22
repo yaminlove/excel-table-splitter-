@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Streamlit
+.streamlit/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Uploaded files (for local testing)
+uploads/
+*.xls
+*.xlsx
+*.zip
+
+# Build tools
+cloudflared*
+ngrok*
+*.tgz
+*.deb
+
+# Flask files (not needed for Streamlit)
+app.py
+start_server.py
+templates/
+process_table.py
+split_tables.py
+
+# Generated files
+Sheet*.xls
+分割后的表格.*
