@@ -73,17 +73,22 @@ def split_by_sum_limit(df, limit=590):
 
 def create_zip_download(tables):
     """创建ZIP文件供下载"""
+    import tempfile
     zip_buffer = BytesIO()
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for i, table in enumerate(tables, 1):
-            # 将DataFrame转换为Excel格式的字节流
-            excel_buffer = BytesIO()
-            table.to_excel(excel_buffer, index=False, engine='openpyxl')
-            excel_buffer.seek(0)
+        # 创建临时目录
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for i, table in enumerate(tables, 1):
+                # 创建临时XLS文件
+                temp_file_path = os.path.join(temp_dir, f'Sheet{i}.xls')
 
-            # 添加到ZIP文件
-            zip_file.writestr(f'Sheet{i}.xlsx', excel_buffer.getvalue())
+                # 使用xlwt引擎写入真正的XLS文件
+                table.to_excel(temp_file_path, index=False, engine='xlwt')
+
+                # 读取文件并添加到ZIP
+                with open(temp_file_path, 'rb') as f:
+                    zip_file.writestr(f'Sheet{i}.xls', f.read())
 
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
@@ -163,8 +168,27 @@ def main():
                     if len(df) > 10:
                         st.info(f"显示前10行，总共{len(df)}行")
 
-                # 处理按钮
-                if st.button("🚀 开始处理表格", type="primary", use_container_width=True):
+                # 处理按钮和清除缓存
+                col_btn1, col_btn2 = st.columns([3, 1])
+                with col_btn1:
+                    process_btn = st.button("🚀 开始处理表格", type="primary", use_container_width=True)
+                with col_btn2:
+                    if st.button("🗑️ 清除", use_container_width=True):
+                        # 清除session state
+                        for key in ['processed', 'tables', 'merged_df']:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        st.rerun()
+
+                if process_btn:
+                    # 清除之前的结果
+                    if 'processed' in st.session_state:
+                        del st.session_state.processed
+                    if 'tables' in st.session_state:
+                        del st.session_state.tables
+                    if 'merged_df' in st.session_state:
+                        del st.session_state.merged_df
+
                     with st.spinner("正在处理表格..."):
                         # 合并连续数量为1的行
                         merged_df = merge_consecutive_ones(df)
@@ -203,7 +227,7 @@ def main():
                     result_data = []
                     for i, table in enumerate(tables, 1):
                         result_data.append({
-                            "表格名称": f"Sheet{i}.xlsx",
+                            "表格名称": f"Sheet{i}.xls",
                             "行数": len(table),
                             "数量总和": table['数量'].sum(),
                             "是否超限": "❌" if table['数量'].sum() > sum_limit else "✅"
@@ -226,7 +250,7 @@ def main():
                     # 预览各个表格
                     with st.expander("👀 预览分割后的表格"):
                         for i, table in enumerate(tables, 1):
-                            st.subheader(f"Sheet{i}.xlsx")
+                            st.subheader(f"Sheet{i}.xls")
                             st.dataframe(table, use_container_width=True)
                             st.markdown("---")
 
