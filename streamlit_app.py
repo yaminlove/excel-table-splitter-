@@ -168,8 +168,27 @@ def main():
                     if len(df) > 10:
                         st.info(f"显示前10行，总共{len(df)}行")
 
-                # 处理按钮
-                if st.button("🚀 开始处理表格", type="primary", use_container_width=True):
+                # 处理按钮和清除缓存
+                col_btn1, col_btn2 = st.columns([3, 1])
+                with col_btn1:
+                    process_btn = st.button("🚀 开始处理表格", type="primary", use_container_width=True)
+                with col_btn2:
+                    if st.button("🗑️ 清除", use_container_width=True):
+                        # 清除session state
+                        for key in ['processed', 'tables', 'merged_df']:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        st.rerun()
+
+                if process_btn:
+                    # 清除之前的结果
+                    if 'processed' in st.session_state:
+                        del st.session_state.processed
+                    if 'tables' in st.session_state:
+                        del st.session_state.tables
+                    if 'merged_df' in st.session_state:
+                        del st.session_state.merged_df
+
                     with st.spinner("正在处理表格..."):
                         # 合并连续数量为1的行
                         merged_df = merge_consecutive_ones(df)
