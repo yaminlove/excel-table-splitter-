@@ -73,17 +73,22 @@ def split_by_sum_limit(df, limit=590):
 
 def create_zip_download(tables):
     """创建ZIP文件供下载"""
+    import tempfile
     zip_buffer = BytesIO()
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for i, table in enumerate(tables, 1):
-            # 将DataFrame转换为真正的XLS格式的字节流
-            excel_buffer = BytesIO()
-            table.to_excel(excel_buffer, index=False, engine='xlwt')
-            excel_buffer.seek(0)
+        # 创建临时目录
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for i, table in enumerate(tables, 1):
+                # 创建临时XLS文件
+                temp_file_path = os.path.join(temp_dir, f'Sheet{i}.xls')
 
-            # 添加到ZIP文件，使用.xls扩展名
-            zip_file.writestr(f'Sheet{i}.xls', excel_buffer.getvalue())
+                # 使用xlwt引擎写入真正的XLS文件
+                table.to_excel(temp_file_path, index=False, engine='xlwt')
+
+                # 读取文件并添加到ZIP
+                with open(temp_file_path, 'rb') as f:
+                    zip_file.writestr(f'Sheet{i}.xls', f.read())
 
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
