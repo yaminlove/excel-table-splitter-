@@ -77,13 +77,13 @@ def create_zip_download(tables):
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for i, table in enumerate(tables, 1):
-            # 将DataFrame转换为Excel格式的字节流
+            # 将DataFrame转换为真正的XLS格式的字节流
             excel_buffer = BytesIO()
-            table.to_excel(excel_buffer, index=False, engine='openpyxl')
+            table.to_excel(excel_buffer, index=False, engine='xlwt')
             excel_buffer.seek(0)
 
-            # 添加到ZIP文件
-            zip_file.writestr(f'Sheet{i}.xlsx', excel_buffer.getvalue())
+            # 添加到ZIP文件，使用.xls扩展名
+            zip_file.writestr(f'Sheet{i}.xls', excel_buffer.getvalue())
 
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
@@ -203,7 +203,7 @@ def main():
                     result_data = []
                     for i, table in enumerate(tables, 1):
                         result_data.append({
-                            "表格名称": f"Sheet{i}.xlsx",
+                            "表格名称": f"Sheet{i}.xls",
                             "行数": len(table),
                             "数量总和": table['数量'].sum(),
                             "是否超限": "❌" if table['数量'].sum() > sum_limit else "✅"
@@ -226,7 +226,7 @@ def main():
                     # 预览各个表格
                     with st.expander("👀 预览分割后的表格"):
                         for i, table in enumerate(tables, 1):
-                            st.subheader(f"Sheet{i}.xlsx")
+                            st.subheader(f"Sheet{i}.xls")
                             st.dataframe(table, use_container_width=True)
                             st.markdown("---")
 
